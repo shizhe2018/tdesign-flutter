@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tdesign_flutter/tdesign_flutter.dart';
@@ -10,24 +11,54 @@ void main() async {
   TDTheme.defaultData();
   var themeData = TDThemeData.fromJson('green', jsonString);
   runApp(MaterialApp(
-    home: Theme(
+    home:
+    Theme(
         data: ThemeData(extensions: [themeData!]),
         child: Builder(
           builder: (context) {
-            return Scaffold(
-              // appBar: TDNavBar(),
-              appBar: _buildAppBar(context),
-              body:  Center(
-                child: TDText('测试文案', textColor: TDTheme.of(context)
-                    .brandNormalColor,),
-              ),
-              bottomNavigationBar: _buildBottomTabBar(),
+            return    Scaffold(
+                    // appBar: TDNavBar(),
+                    appBar: _buildAppBar(context),
+                    body:MediaQuery(
+                        data: MediaQuery.of(context).copyWith(padding:EdgeInsets.only(top: 10)),
+                        child:Container(
+                        color: Colors.red,
+                        child: Center(
+                            child: TDText('测试文案', textColor: TDTheme.of(context)
+                                .brandNormalColor,),
+                        ))) ,
+                    bottomNavigationBar: _buildBottomTabBar(),
             );
           },
         )),
-  ));
-}
+    )
 
+
+    // Theme(
+    //     data: ThemeData(extensions: [themeData!]),
+    //     child: Builder(
+    //       builder: (context) {
+    //         return Scaffold(
+    //           // appBar: TDNavBar(),
+    //           appBar: _buildAppBar(context),
+    //           body:  Center(
+    //             child: TDText('测试文案', textColor: TDTheme.of(context)
+    //                 .brandNormalColor,),
+    //           ),
+    //           backgroundColor: Colors.red,
+    //           bottomNavigationBar: _buildBottomTabBar(),
+    //         );
+    //       },
+    //     )),
+  );
+}
+_buildTestWidget(BuildContext context){
+   return  MediaQuery(
+     data: MediaQuery.of(context).copyWith(padding:EdgeInsets.only(top: 20)),
+     child:Center(
+       child: TDText('测试文案',style: TextStyle(color: Colors.white)),),
+   );
+}
 PreferredSize _buildAppBar(BuildContext context) {
   return PreferredSize(
     preferredSize: Size(
@@ -64,11 +95,13 @@ PreferredSize _buildAppBar(BuildContext context) {
 TDBottomTabBar _buildBottomTabBar() {
   var iconSize = 39 * 60 / 98;
   var textSize = 8.0;
-  return TDBottomTabBar(
+  return
+    TDBottomTabBar(
     TDBottomTabBarBasicType.iconText,
     componentType: TDBottomTabBarComponentType.normal,
     useVerticalDivider: false,
-    barHeight: 98 * 60 / 98,
+    barHeight: 55,//98 * 60 / 98,
+        backgroundColor:Colors.blue,
     navigationTabs: [
       TDBottomTabBarTabConfig(
         selectedIcon: Icon(TDIcons.home, size: iconSize, color: Colors.red),

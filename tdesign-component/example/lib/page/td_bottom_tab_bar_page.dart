@@ -206,7 +206,9 @@ class _TDBottomTabBarPageState extends State<TDBottomTabBarPage> {
             desc: 'icon默认大小底部文字不溢出',
             builder: (context) {
               return CodeWrapper(builder: _iconTextTypeTabBarOverflow);
-            })
+            }),
+        ExampleItem(desc: 'onTap支持重复触发', builder: _allowMultipleTaps),
+        ExampleItem(desc: '支持水波纹效果', builder: _needInkWellTabBar),
       ],
     );
   }
@@ -1060,5 +1062,56 @@ class _TDBottomTabBarPageState extends State<TDBottomTabBarPage> {
         ],
       ),
     );
+  }
+
+  @Demo(group: 'bottomTabBar')
+  Widget _allowMultipleTaps(BuildContext context) {
+    return TDBottomTabBar(TDBottomTabBarBasicType.text, useVerticalDivider: false, navigationTabs: [
+      TDBottomTabBarTabConfig(
+        allowMultipleTaps: true,
+        tabText: '支持重复点击',
+        onTap: () {
+          onTapTab(context, '标签1');
+        },
+      ),
+      TDBottomTabBarTabConfig(
+        tabText: '不支持重复点击',
+        onTap: () {
+          onTapTab(context, '标签2');
+        },
+      ),
+    ]);
+  }
+
+  @Demo(group: 'bottomTabBar')
+  Widget _needInkWellTabBar(BuildContext context) {
+    return TDBottomTabBar(TDBottomTabBarBasicType.iconText,
+        needInkWell: true,
+        navigationTabs: [
+          TDBottomTabBarTabConfig(
+            tabText: '标签',
+            selectedIcon: _selectedIcon,
+            unselectedIcon: _unSelectedIcon,
+            onTap: () {
+              onTapTab(context, '标签1');
+            },
+          ),
+          TDBottomTabBarTabConfig(
+            tabText: '',
+            selectedIcon: _selectedIcon,
+            unselectedIcon: _unSelectedIcon,
+            onTap: () {
+              onTapTab(context, '标签2');
+            },
+          ),
+          TDBottomTabBarTabConfig(
+            tabText: '标签',
+            selectedIcon: _selectedIcon,
+            unselectedIcon: _unSelectedIcon,
+            onTap: () {
+              onTapTab(context, '标签2');
+            },
+          ),
+        ]);
   }
 }

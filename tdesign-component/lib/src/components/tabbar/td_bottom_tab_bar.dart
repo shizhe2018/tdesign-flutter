@@ -77,17 +77,18 @@ class BadgeConfig {
 
 /// 单个tab配置
 class TDBottomTabBarTabConfig {
-  TDBottomTabBarTabConfig(
-      {required this.onTap,
-      this.selectedIcon,
-      this.unselectedIcon,
-      this.tabText,
-      this.selectTabTextStyle,
-      this.unselectTabTextStyle,
-      this.badgeConfig,
-      this.popUpButtonConfig,
-      this.onLongPress})
-      : assert(() {
+  TDBottomTabBarTabConfig({
+    required this.onTap,
+    this.selectedIcon,
+    this.unselectedIcon,
+    this.tabText,
+    this.selectTabTextStyle,
+    this.unselectTabTextStyle,
+    this.badgeConfig,
+    this.popUpButtonConfig,
+    this.onLongPress,
+    this.allowMultipleTaps = false
+  }) : assert(() {
           if (badgeConfig?.showBadge ?? false) {
             if (badgeConfig?.tdBadge == null) {
               throw FlutterError('[NavigationTab] if set showBadge = true, '
@@ -121,6 +122,9 @@ class TDBottomTabBarTabConfig {
   /// 弹窗配置
   final TDBottomTabBarPopUpBtnConfig? popUpButtonConfig;
 
+  /// onTap方法允许点击多次
+  final bool allowMultipleTaps;
+
   /// 长按事件
   final GestureLongPressCallback? onLongPress;
 }
@@ -145,6 +149,7 @@ class TDBottomTabBar extends StatefulWidget {
     this.backgroundColor,
     this.centerDistance,
     this.currentIndex,
+    this.needInkWell = false,
   })  : assert(() {
           if (navigationTabs.isEmpty) {
             throw FlutterError('[TDBottomTabBar] please set at least one tab!');
@@ -237,6 +242,9 @@ class TDBottomTabBar extends StatefulWidget {
   /// 选中的index（可选）
   final int? currentIndex;
 
+  /// 是否需要水波纹效果
+  final bool needInkWell;
+
   @override
   State<TDBottomTabBar> createState() => _TDBottomTabBarState();
 }
@@ -311,7 +319,9 @@ class _TDBottomTabBarState extends State<TDBottomTabBar> {
 
   void _onTap(int index) {
     setState(() {
-      widget.navigationTabs[index].onTap?.call();
+      if (_selectedIndex != index || widget.navigationTabs[index].allowMultipleTaps) {
+        widget.navigationTabs[index].onTap?.call();
+      }
       if (_selectedIndex != index) {
         _selectedIndex = index;
       }
@@ -341,6 +351,7 @@ class _TDBottomTabBarState extends State<TDBottomTabBar> {
           selectedBgColor: widget.selectedBgColor,
           unselectedBgColor: widget.unselectedBgColor,
           centerDistance: widget.centerDistance ?? 0,
+          needInkWell: widget.needInkWell,
           onTap: () {
             _onTap(index);
           },
@@ -387,7 +398,8 @@ class TDBottomTabBarItemWithBadge extends StatelessWidget {
       required this.selectedBgColor,
       required this.unselectedBgColor,
       required this.centerDistance,
-      this.onLongPress})
+      this.onLongPress,
+      this.needInkWell = false})
       : super(key: key);
 
   /// tab基本类型
@@ -429,35 +441,15 @@ class TDBottomTabBarItemWithBadge extends StatelessWidget {
   /// 长按事件
   final GestureLongPressCallback? onLongPress;
 
+  /// 是否需要水波纹效果
+  final bool needInkWell;
+
   @override
   Widget build(BuildContext context) {
-    var popUpButtonConfig = itemConfig.popUpButtonConfig;
-    var badgeConfig = itemConfig.badgeConfig;
-    var isInOrOutCapsule = componentType == TDBottomTabBarComponentType.label ||
-        outlineType == TDBottomTabBarOutlineType.capsule;
-
-    void handleTap() {
-      onTap.call();
-      if (itemConfig.popUpButtonConfig != null) {
-        Navigator.push(
-            context,
-            PopRoute(
-              child: PopupDialog(
-                itemWidth - _kDefaultMenuItemWidthShrink,
-                btnContext: context,
-                config: popUpButtonConfig!.popUpDialogConfig,
-                items: popUpButtonConfig.items,
-                onClickMenu: (value) {
-                  popUpButtonConfig.onChanged(value);
-                },
-              ),
-            ));
-      }
-    }
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: handleTap,
+      onTap: ()=>handleTap(context),
       onLongPress: () {
         onLongPress?.call();
       },
@@ -486,32 +478,7 @@ class TDBottomTabBarItemWithBadge extends StatelessWidget {
                   ),
                 ),
               ),
-            Material(
-              color: Colors.transparent,
-              borderRadius: isInOrOutCapsule ? BorderRadius.circular(24) : null,
-              child: InkWell(
-                borderRadius:
-                    isInOrOutCapsule ? BorderRadius.circular(24) : null,
-                splashFactory: InkRipple.splashFactory,
-                splashColor: selectedBgColor ?? TDTheme.of(context).brandColor1,
-                highlightColor:
-                    selectedBgColor ?? TDTheme.of(context).brandColor1,
-                onTap: handleTap,
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.only(
-                    top: isInOrOutCapsule ? 3.0 : 2.0,
-                    bottom: isInOrOutCapsule
-                        ? (basiceType == TDBottomTabBarBasicType.iconText
-                            ? 0.0
-                            : 1.0)
-                        : 0.0,
-                  ),
-                  color: Colors.transparent,
-                  child: _constructItem(context, badgeConfig, isInOrOutCapsule),
-                ),
-              ),
-            ),
+            _buildItem(context),
           ],
         ),
       ),
@@ -611,6 +578,61 @@ class TDBottomTabBarItemWithBadge extends StatelessWidget {
           : TDTheme.of(context).fontGyColor1,
       forceVerticalCenter: true,
     );
+  }
+
+  _buildItem(BuildContext context) {
+    var badgeConfig = itemConfig.badgeConfig;
+    var isInOrOutCapsule = componentType == TDBottomTabBarComponentType.label ||
+        outlineType == TDBottomTabBarOutlineType.capsule;
+
+    var child = Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.only(
+        top: isInOrOutCapsule ? 3.0 : 2.0,
+        bottom: isInOrOutCapsule
+            ? (basiceType == TDBottomTabBarBasicType.iconText ? 0.0 : 1.0)
+            : 0.0,
+      ),
+      color: Colors.transparent,
+      child: _constructItem(context, badgeConfig, isInOrOutCapsule),
+    );
+
+    if (!needInkWell) {
+      return child;
+    }
+    return Material(
+      color: Colors.transparent,
+      borderRadius: isInOrOutCapsule ? BorderRadius.circular(24) : null,
+      child: InkWell(
+        borderRadius: isInOrOutCapsule ? BorderRadius.circular(24) : null,
+        splashFactory: InkRipple.splashFactory,
+        splashColor: selectedBgColor ?? TDTheme.of(context).brandColor1,
+        highlightColor: selectedBgColor ?? TDTheme.of(context).brandColor1,
+        onTap: () => handleTap(context),
+        child: child,
+      ),
+    );
+  }
+
+  void handleTap(BuildContext context) {
+    onTap.call();
+
+    var popUpButtonConfig = itemConfig.popUpButtonConfig;
+    if (popUpButtonConfig != null) {
+      Navigator.push(
+          context,
+          PopRoute(
+            child: PopupDialog(
+              itemWidth - _kDefaultMenuItemWidthShrink,
+              btnContext: context,
+              config: popUpButtonConfig.popUpDialogConfig,
+              items: popUpButtonConfig.items,
+              onClickMenu: (value) {
+                popUpButtonConfig.onChanged(value);
+              },
+            ),
+          ));
+    }
   }
 }
 
